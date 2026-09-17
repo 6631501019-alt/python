@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: network_backend
+    restart: always
+    networks:
+      - myapp-network
+      - default
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: network_frontend
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - default
+    depends_on:
+      - backend
+
+networks:
+  myapp-network:
+    external: true
+  default:

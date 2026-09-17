@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Automation - Router CLI</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        h2 {
+            margin-top: 0;
+            color: #1e293b;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #334155;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: #2563eb;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .terminal-box {
+            margin-top: 24px;
+            background: #0f172a;
+            color: #22c55e;
+            padding: 18px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Network Automation Web Interface</h2>
+    
+    <div class="form-group">
+        <label for="routerIp">IP of Router:</label>
+        <input type="text" id="routerIp" placeholder="Enter Router IP (e.g. 192.168.122.50)">
+    </div>
+
+    <div class="form-group">
+        <label for="routerCmd">Router Commandline:</label>
+        <input type="text" id="routerCmd" placeholder="e.g. sh ip int br, show version" value="sh ip int br">
+    </div>
+
+    <button id="btnExecute" onclick="runCommand()">Execute</button>
+
+    <div class="terminal-box" id="outputConsole">Router output will appear here...</div>
+</div>
+
+<script>
+    async function runCommand() {
+        const ip = document.getElementById('routerIp').value.trim();
+        const command = document.getElementById('routerCmd').value.trim();
+        const consoleBox = document.getElementById('outputConsole');
+        const btn = document.getElementById('btnExecute');
+
+        if (!ip || !command) {
+            alert('Please provide both Router IP and Command!');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'Executing...';
+        consoleBox.style.color = '#38bdf8';
+        consoleBox.innerText = `Connecting to ${ip} and executing: "${command}" ...\nPlease wait...`;
+
+        try {
+            const response = await fetch('/api/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ip: ip, command: command })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                consoleBox.style.color = '#22c55e';
+                consoleBox.innerText = data.output;
+            } else {
+                consoleBox.style.color = '#ef4444';
+                consoleBox.innerText = 'ERROR:\n' + (data.error || 'Unknown error occurred');
+            }
+        } catch (err) {
+            consoleBox.style.color = '#ef4444';
+            consoleBox.innerText = 'Network/API Error:\n' + err.message;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Execute';
+        }
+    }
+</script>
+
+</body>
+</html>
